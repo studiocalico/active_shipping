@@ -603,4 +603,13 @@ class UPSTest < Minitest::Test
     assert_equal 'OZS', request.search('/Package/PackageWeight/UnitOfMeasurement/Code').text
     assert_equal '8.0', request.search('/Package/PackageWeight/Weight').text
   end
+
+  def test_address_validation
+    location = Location.new(address1: "55 Glenlake Parkway", city: "Atlanta", state: "GA", zip: "30328", country: "US")
+    address_validation_response = xml_fixture('ups/address_validation_response')
+    @carrier.expects(:commit).returns(address_validation_response)
+    response = @carrier.validate_address(location)
+    assert_equal :commercial, response.classification
+    assert_equal true, response.address_match?
+  end
 end
