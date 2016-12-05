@@ -1019,32 +1019,34 @@ module ActiveShipping
       addresses = []
 
       if success
-        classification_code = xml.at('AddressClassification/Code').text
+        if xml.at('AddressClassification/Code').present?
+          classification_code = xml.at('AddressClassification/Code').text
+        end
         
-        if classification_code == "1"
-          classification = :commercial
-        elsif classification_code == "2"
-          classification = :residential
+        classification = case classification_code
+        when "1"
+          :commercial
+        when "2"
+          :residential
         else
-          classification = :unknown
+          :unknown
         end
 
-        if xml.at("ValidAddressIndicator")
-          validity = :valid
-        elsif xml.at("AmbiguousAddressIndicator")
-          validity = :ambiguous
-        elsif xml.at("NoCandidatesIndicator")
-          validity = :invalid
+        validity = if xml.at("ValidAddressIndicator").present?
+          :valid
+        elsif xml.at("AmbiguousAddressIndicator").present?
+          :ambiguous
+        elsif xml.at("NoCandidatesIndicator").present?
+          :invalid
         else
-          validity = :unknown
+          :unknown
         end
 
-        xml.css('AddressKeyFormat').each do |address_key_node|
-          addresses << location_from_address_key_format_node(address_key_node)
-        end
+        addresses = xml.css('AddressKeyFormat').collect { |node| location_from_address_key_format_node(node) }
       end
 
-      response = AddressValidationResponse.new(success, message, Hash.from_xml(response).values.first, :validity => validity, :classification => classification, :candidate_addresses => addresses, :xml => response, :request => last_request)
+      params = Hash.from_xml(response).values.first
+      response = AddressValidationResponse.new(success, message, params, :validity => validity, :classification => classification, :candidate_addresses => addresses, :xml => response, :request => last_request)
     end
 
     # Converts from a AddressKeyFormat XML node to a Location
