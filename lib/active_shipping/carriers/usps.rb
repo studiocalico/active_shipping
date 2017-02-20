@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 module ActiveShipping
   # After getting an API login from USPS (looks like '123YOURNAME456'),
   # run the following test:
@@ -233,7 +231,7 @@ module ActiveShipping
     end
 
     def maximum_weight
-      Mass.new(70, :pounds)
+      Measured::Weight.new(70, :pounds)
     end
 
     def extract_event_details(node)
